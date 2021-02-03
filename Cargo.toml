@@ -12,10 +12,11 @@ prost = "0.7"
 rand = "0.8.3"
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
+sqlx = {version = "0.4.2", features = ["postgres", "runtime-tokio-rustls"]}
 tokio = {version = "1.1.1", features = ["full"]}
+tokio-compat-02 = {version = "0.2.0"}
 tokio-stream = "0.1.2"
 tonic = "0.4"
-
 [build-dependencies]
 tonic-build = "0.4"
 

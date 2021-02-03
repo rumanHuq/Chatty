@@ -5,11 +5,15 @@ use chat::{
   chat_server::{Chat, ChatServer},
   ChatResults, Message, People, Person, Register,
 };
-use std::pin::Pin;
+use tokio_compat_02::FutureExt;
+mod db;
+use db::Db;
+use std::{pin::Pin, sync::Arc};
 use tokio_stream::Stream;
 use tonic::{transport::Server, Request, Response, Status};
-#[derive(Debug)]
-struct ChatService {}
+struct ChatService {
+  db: Arc<Db>,
+}
 
 #[tonic::async_trait]
 impl Chat for ChatService {
@@ -39,15 +43,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let addr = "[::1]:10000".parse().unwrap();
 
   println!("RouteGuideServer listening on: {}", addr);
+  let db = Db::new().compat().await?;
 
-  let chat = ChatService {
-    // TODO: add diesel and postgres service here
-    // db: Arc::new(data::load()),
-  };
+  let chat = ChatService { db: Arc::new(db) };
 
   let svc = ChatServer::new(chat);
 
-  Server::builder().add_service(svc).serve(addr).await?;
+  Server::builder().add_service(svc).serve(addr).compat().await?;
 
   Ok(())
 }
