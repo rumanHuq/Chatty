@@ -1,0 +1,46 @@
+syntax = "proto3";
+package chat;
+
+import "google/protobuf/empty.proto";
+
+service Chat {
+  rpc RegisterAndChat(Register) returns (stream ChatResults) {};
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {};
+  rpc SendMessage(Message) returns (google.protobuf.Empty) {};
+  rpc ChangeStatus(Person) returns (google.protobuf.Empty) {};
+  rpc GetActivePeople(google.protobuf.Empty) returns (People) {};
+}
+
+enum Active {
+  UNSPECIFIED = 0;
+  OFF_LINE = 1;
+  ACTIVE = 2;
+  NOT_SEEN = 3;
+}
+
+message Person {
+  string name = 1;
+  Active active = 2;
+}
+
+message People {
+  // all the persons
+  repeated Person people = 1;
+}
+
+message Message {
+  Person sender = 1;
+  string text = 2;
+}
+
+message Register {
+  //
+  Person person = 1;
+}
+
+message ChatResults {
+  oneof type {
+    Message text = 1;
+    People people = 2;
+  }
+}
