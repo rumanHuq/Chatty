@@ -8,7 +8,7 @@ impl Db {
   pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
     let db = PgPoolOptions::new()
       .max_connections(5)
-      .connect("postgres://localhost/chat_app")
+      .connect("postgres://localhost/chat_db")
       .await?;
     Ok(Db { db })
   }
