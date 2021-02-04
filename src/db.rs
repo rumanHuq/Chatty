@@ -1,5 +1,4 @@
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use tokio_compat_02::FutureExt;
 
 pub struct Db {
   db: Pool<Postgres>,

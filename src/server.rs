@@ -3,9 +3,8 @@ pub mod chat {
 }
 use chat::{
   chat_server::{Chat, ChatServer},
-  ChatResults, Message, People, Person, Register,
+  ChatResults, Message, Register, User, Users,
 };
-use tokio_compat_02::FutureExt;
 mod db;
 use db::Db;
 use std::{pin::Pin, sync::Arc};
@@ -17,10 +16,10 @@ struct ChatService {
 
 #[tonic::async_trait]
 impl Chat for ChatService {
-  async fn change_status(&self, _request: Request<Person>) -> Result<Response<()>, Status> {
+  async fn change_status(&self, _request: Request<User>) -> Result<Response<()>, Status> {
     unimplemented!();
   }
-  async fn get_active_people(&self, _request: Request<()>) -> Result<Response<People>, Status> {
+  async fn get_active_people(&self, _request: Request<()>) -> Result<Response<Users>, Status> {
     unimplemented!();
   }
   async fn ping(&self, _request: Request<()>) -> Result<Response<()>, Status> {
@@ -43,13 +42,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let addr = "[::1]:10000".parse().unwrap();
 
   println!("RouteGuideServer listening on: {}", addr);
-  let db = Db::new().compat().await?;
+  let db = Db::new().await?;
 
   let chat = ChatService { db: Arc::new(db) };
 
   let svc = ChatServer::new(chat);
 
-  Server::builder().add_service(svc).serve(addr).compat().await?;
+  Server::builder().add_service(svc).serve(addr).await?;
 
   Ok(())
 }
