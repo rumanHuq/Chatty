@@ -1,25 +1,5 @@
-[package]
-authors = ["Majedul Hoque <rumanbsl@gmail.com>"]
-edition = "2018"
-name = "rust-chat"
-version = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-async-stream = "0.3.0"
-prost = "0.7"
-prost-types = "0.7.0"
-rand = "0.8.3"
-serde = {version = "1.0", features = ["derive"]}
-serde_json = "1.0"
-sqlx = {version = "0.5.1", features = ["postgres", "runtime-tokio-rustls"]}
-tokio = {version = "1.1.1", features = ["full"]}
-tokio-stream = "0.1.2"
-tonic = "0.4"
-[build-dependencies]
-tonic-build = "0.4"
-
-[[bin]]
-name = "chat-server"
-path = "src/server.rs"
+[workspace]
+members = [
+  'server',
+  'common',
+]
