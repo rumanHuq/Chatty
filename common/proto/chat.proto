@@ -11,7 +11,7 @@ service Chat {
   // rpc SendMessage(Message) returns (google.protobuf.Empty) {};
   // rpc ChangeStatus(User) returns (google.protobuf.Empty) {};
   // rpc GetActivePeople(google.protobuf.Empty) returns (Users) {};
-  rpc CreateUser(User) returns (UserSchema) {};
+  rpc CreateUser(User) returns (google.protobuf.Any) {};
 }
 
 enum Active {

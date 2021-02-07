@@ -1,36 +1,51 @@
 mod db;
 use common::chat::{
   chat_server::{Chat as ChatTrait, ChatServer},
-  User as UserInput, UserSchema,
+  User as UserInput,
 };
 use db::Db;
 use sqlx::{self, FromRow, Pool, Postgres};
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 use tonic::{transport::Server, Request, Response, Status};
 
 struct Chat {
   db: Arc<Pool<Postgres>>,
 }
 
-#[derive(FromRow)]
+#[derive(FromRow, Debug)]
 struct User {
+  id: i64,
   name: String,
-  active: i32,
+  active: Active,
+}
+#[derive(sqlx::Type, Debug)]
+#[sqlx(type_name = "active", rename_all = "SCREAMING_SNAKE_CASE")]
+enum Active {
+  Unspecified,
+  OffLine,
+  Active,
+  NotSeen,
 }
 
 #[tonic::async_trait]
 impl ChatTrait for Chat {
-  async fn create_user(&self, request: Request<UserInput>) -> Result<Response<UserSchema>, Status> {
-    if let user = request.get_ref() {
-      let db = self.db;
-      let mut rows = sqlx::query("INSERT INTO users (username, active) VALUES (?,?)")
-        .bind(&user.name)
-        .bind(&user.active)
-        .execute(db);
-      unimplemented!();
-    } else {
-      Err(Status::invalid_argument("Provide some good shit"))
-    }
+  async fn create_user(&self, request: Request<UserInput>) -> Result<Response<prost_types::Any>, Status> {
+    let user = request.get_ref();
+    let active = match &user.active {
+      1 => Active::OffLine,
+      2 => Active::Active,
+      3 => Active::NotSeen,
+      _ => Active::Unspecified,
+    };
+
+    let stream = sqlx::query_as::<_, User>("INSERT INTO users(name, active) VALUES($1,$2) RETURNING id, name, active")
+      .bind(&user.name)
+      .bind(active)
+      .fetch_one(self.db.deref())
+      .await
+      .or_else(|e| Err(Status::unknown(format!("{}", e))))?;
+    println!("=>{:?}", stream);
+    unimplemented!();
   }
 }
 
