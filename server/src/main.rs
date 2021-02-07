@@ -4,21 +4,22 @@ use common::chat::{
   User as UserInput,
 };
 use db::Db;
+use prost_types::Any;
+use serde::Serialize;
 use sqlx::{self, FromRow, Pool, Postgres};
 use std::{ops::Deref, sync::Arc};
 use tonic::{transport::Server, Request, Response, Status};
-
 struct Chat {
   db: Arc<Pool<Postgres>>,
 }
 
-#[derive(FromRow, Debug)]
+#[derive(FromRow, Debug, Serialize)]
 struct User {
   id: i64,
   name: String,
   active: Active,
 }
-#[derive(sqlx::Type, Debug)]
+#[derive(sqlx::Type, Debug, Serialize)]
 #[sqlx(type_name = "active", rename_all = "SCREAMING_SNAKE_CASE")]
 enum Active {
   Unspecified,
@@ -38,14 +39,18 @@ impl ChatTrait for Chat {
       _ => Active::Unspecified,
     };
 
-    let stream = sqlx::query_as::<_, User>("INSERT INTO users(name, active) VALUES($1,$2) RETURNING id, name, active")
-      .bind(&user.name)
-      .bind(active)
-      .fetch_one(self.db.deref())
-      .await
-      .or_else(|e| Err(Status::unknown(format!("{}", e))))?;
-    println!("=>{:?}", stream);
-    unimplemented!();
+    let inserted_user: User =
+      sqlx::query_as::<_, User>("INSERT INTO users(name, active) VALUES($1,$2) RETURNING id, name, active")
+        .bind(&user.name)
+        .bind(active)
+        .fetch_one(self.db.deref())
+        .await
+        .or_else(|e| Err(Status::unknown(format!("{}", e))))?;
+    let any = prost_types::Any {
+      type_url: "".into(),
+      value: serde_json::to_string(&inserted_user).unwrap().into(),
+    };
+    Ok(Response::new(any))
   }
 }
 
