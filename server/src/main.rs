@@ -1,12 +1,11 @@
 mod db;
 use common::chat::{
   chat_server::{Chat as ChatTrait, ChatServer},
-  User as UserInput,
+  UserInput, UserSchema,
 };
 use db::Db;
-use prost_types::Any;
 use serde::Serialize;
-use sqlx::{self, FromRow, Pool, Postgres};
+use sqlx::{self, FromRow, Pool, Postgres, Type};
 use std::{ops::Deref, sync::Arc};
 use tonic::{transport::Server, Request, Response, Status};
 struct Chat {
@@ -19,7 +18,7 @@ struct User {
   name: String,
   active: Active,
 }
-#[derive(sqlx::Type, Debug, Serialize)]
+#[derive(Type, Debug, Serialize)]
 #[sqlx(type_name = "active", rename_all = "SCREAMING_SNAKE_CASE")]
 enum Active {
   Unspecified,
@@ -30,7 +29,7 @@ enum Active {
 
 #[tonic::async_trait]
 impl ChatTrait for Chat {
-  async fn create_user(&self, request: Request<UserInput>) -> Result<Response<prost_types::Any>, Status> {
+  async fn create_user(&self, request: Request<UserInput>) -> Result<Response<UserSchema>, Status> {
     let user = request.get_ref();
     let active = match &user.active {
       1 => Active::OffLine,
@@ -46,11 +45,12 @@ impl ChatTrait for Chat {
         .fetch_one(self.db.deref())
         .await
         .or_else(|e| Err(Status::unknown(format!("{}", e))))?;
-    let any = prost_types::Any {
-      type_url: "".into(),
-      value: serde_json::to_string(&inserted_user).unwrap().into(),
-    };
-    Ok(Response::new(any))
+
+    Ok(Response::new(UserSchema {
+      id: inserted_user.id,
+      name: inserted_user.name,
+      active: user.active,
+    }))
   }
 }
 

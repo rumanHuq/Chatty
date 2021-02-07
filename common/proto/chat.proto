@@ -1,8 +1,6 @@
 syntax = "proto3";
 package chat;
 
-import "google/protobuf/any.proto";
-import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service Chat {
@@ -11,7 +9,7 @@ service Chat {
   // rpc SendMessage(Message) returns (google.protobuf.Empty) {};
   // rpc ChangeStatus(User) returns (google.protobuf.Empty) {};
   // rpc GetActivePeople(google.protobuf.Empty) returns (Users) {};
-  rpc CreateUser(User) returns (google.protobuf.Any) {};
+  rpc CreateUser(UserInput) returns (UserSchema) {};
 }
 
 enum Active {
@@ -21,31 +19,31 @@ enum Active {
   NOT_SEEN = 3;
 }
 
-// @Schema
-message User {
+message UserInput {
   string name = 2;
   Active active = 3;
 }
 message UserSchema {
-  uint32 id = 1;
-  google.protobuf.Any user = 2;
+  int64 id = 1;
+  string name = 2;
+  Active active = 3;
 }
 // @Schema
 message Message {
-  uint32 id = 1;
-  User sender_id = 2;
+  int64 id = 1;
+  UserSchema sender_id = 2;
   string message_text = 3;
   google.protobuf.Timestamp submit_date = 4;
 }
 
 message Users {
   // all the Users
-  repeated User users = 1;
+  repeated UserSchema users = 1;
 }
 
 message Register {
   //
-  User user = 1;
+  UserSchema user = 1;
 }
 
 message ChatResults {
