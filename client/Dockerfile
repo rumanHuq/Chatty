@@ -1,26 +1,15 @@
 FROM node:15.6.0-alpine as base
-WORKDIR /app
-COPY ./package*.json ./yarn*lock\
-  ./babel.config.js\
-  ./.eslintrc.js\
-  ./tsconfig.json ./
-RUN mkdir frontend
-COPY ./frontend/package.json ./frontend/yarn*lock ./frontend/
-RUN apk add --no-cache --virtual .build-deps make gcc g++ python && yarn
-ENV PATH=/app/node_modules/.bin:$PATH
+WORKDIR /client
+COPY ./package.json ./package*lock ./
+RUN apk add --no-cache --virtual .build-deps make gcc g++ python && npm i
+ENV PATH=/client/node_modules/.bin:$PATH
 ENV ACLOCAL_PATH=/usr/share/aclocal
 ENV LIBRARY_PATH=/lib:/usr/lib
 
 FROM base as dev
-EXPOSE 1111
-WORKDIR /app/frontend
-COPY ./frontend .
-COPY --from=base /app/frontend .
-CMD [ "yarn", "dev" ]
+WORKDIR /client
+COPY . .
+COPY --from=base /client .
+CMD [ "npm", "run", "dev" ]
+EXPOSE 5000
 
-FROM base as dev-https
-EXPOSE 2222
-WORKDIR /app/frontend
-COPY ./frontend .
-COPY --from=base /app/frontend .
-CMD [ "yarn", "start:https" ]
