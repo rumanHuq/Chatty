@@ -1,15 +1,20 @@
 {
+  "evenBetterToml.formatter.alignEntries": true,
+  "evenBetterToml.formatter.indentTables": true,
+  "evenBetterToml.formatter.reorderKeys": true,
   "rust-analyzer.cargo.loadOutDirsFromCheck": true,
+  "rust-analyzer.updates.channel": "nightly",
+  "rust-analyzer.server.path": "~/Library/Application Support/Code - Insiders/User/globalStorage/matklad.rust-analyzer/rust-analyzer-x86_64-apple-darwin",
   "sqltools.connections": [
     {
+      "askForPassword": true,
+      "database": "chat_db",
+      "driver": "PostgreSQL",
+      "name": "Chat DB",
+      "port": 5432,
       "previewLimit": 50,
       "server": "localhost",
-      "port": 5432,
-      "askForPassword": true,
-      "driver": "PostgreSQL",
-      "database": "chat_db",
-      "username": "postgres",
-      "name": "Chat DB"
+      "username": "postgres"
     }
   ]
 }

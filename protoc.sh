@@ -1,4 +1,4 @@
-OUT_DIR=./client/src/@types
+OUT_DIR=./client/src/grpc-service
 #!/usr/bin/env bash
 protoc \
     -I=./common/proto \

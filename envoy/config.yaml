@@ -51,4 +51,4 @@ static_resources:
                   address:
                     socket_address:
                       address: node-server
-                      port_value: 9090
+                      port_value: 50051

@@ -1,0 +1,43 @@
+version: "3"
+services:
+  backend:
+    tty: true
+    container_name: "CHATTY_BACKEND"
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
+      target: dev
+    ports:
+      - 9090:9090
+    volumes:
+      - ./server:/rust-chat/server
+      - ./common:/rust-chat/common
+      - ./rustfmt.toml:/rust-chat/rustfmt.toml
+      - ./Cargo.toml:/rust-chat/Cargo.toml
+      - ./Cargo.lock:/rust-chat/Cargo.lock
+      - backend-deps:/rust-chat/target
+    environment:
+      - DATABASE_URL=postgres://postgres:password123@database/chat_db
+    depends_on:
+      database:
+        condition: service_healthy
+  database:
+    container_name: CHATTY_DB
+    image: "postgres:13.1"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: chat_db
+      PGDATA: /var/lib/postgresql/data/
+    volumes:
+      - postgres:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  backend-deps:
+  postgres:

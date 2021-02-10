@@ -1,4 +1,5 @@
 mod db;
+pub mod env;
 use common::chat::{
   chat_server::{Chat as ChatTrait, ChatServer},
   UserInput, UserSchema,
@@ -39,7 +40,7 @@ impl ChatTrait for Chat {
     };
 
     let inserted_user: User =
-      sqlx::query_as::<_, User>("INSERT INTO users(name, active) VALUES($1,$2) RETURNING id, name, active")
+      sqlx::query_as::<Postgres, User>("INSERT INTO users(name, active) VALUES($1,$2) RETURNING id, name, active")
         .bind(&user.name)
         .bind(active)
         .fetch_one(self.db.deref())
@@ -58,7 +59,7 @@ impl ChatTrait for Chat {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let db = Arc::new(Db::pool().await?);
   let chat_service = ChatServer::new(Chat { db: db.clone() });
-  let addr = "[::1]:50051".parse()?;
+  let addr = "[::0]:50051".parse()?;
   println!("GreeterServer listening on {}", addr);
 
   Server::builder().add_service(chat_service).serve(addr).await?;
