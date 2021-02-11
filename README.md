@@ -20,3 +20,5 @@ It includes:
       $ chmod +x ./protoc.sh # one time operation
       $ ./protoc.sh # whenever your proto files are updated in ./common/proto
     ```
+
+> For convinience, all the recommended vscode plugins are included and vscode should suggest them to be installed

@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "matklad.rust-analyzer",
+    "tamasfe.even-better-toml",
+    "serayuzgur.crates",
+    "svelte.svelte-vscode",
+    "plex.vscode-protolint",
+    "zxh404.vscode-proto3"
+  ]
+}
