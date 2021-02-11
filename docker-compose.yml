@@ -1,0 +1,68 @@
+version: "3"
+services:
+  #############################################################################
+  client:
+    tty: true
+    container_name: "CHATTY_CLIENT"
+    build:
+      context: ./client
+      target: dev
+    ports:
+      - 5000:5000
+    environment:
+      - HOST_BACKEND=server
+      - NODE_ENV=development
+    volumes:
+      - ./client:/client:rw
+      - node_modules:/client/node_modules
+  #############################################################################
+  server:
+    tty: true
+    container_name: "CHATTY_BACKEND"
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
+      target: dev
+    ports:
+      - 50051:50051
+    volumes:
+      - ./server:/rust-chat/server:rw
+      - ./common:/rust-chat/common:rw
+      - ./rustfmt.toml:/rust-chat/rustfmt.toml
+      - ./Cargo.toml:/rust-chat/Cargo.toml
+      - ./Cargo.lock:/rust-chat/Cargo.lock
+      - target:/rust-chat/target
+    environment:
+      - DATABASE_URL=postgres://postgres:password123@database/chat_db
+    depends_on:
+      database:
+        condition: service_healthy
+  #############################################################################
+  database:
+    container_name: CHATTY_DB
+    image: "postgres:13.1"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: chat_db
+      PGDATA: /var/lib/postgresql/data/
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  #############################################################################
+  envoy:
+    tty: true
+    container_name: "CHATTY_ENVOY"
+    build:
+      context: ./envoy
+    ports:
+      - "8080:8080"
+volumes:
+  target:
+  node_modules:

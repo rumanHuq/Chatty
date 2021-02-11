@@ -1,2 +1,4 @@
 /target
 /server/target
+client/node_modules/
+client/public/build/
