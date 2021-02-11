@@ -31,7 +31,7 @@ services:
       - ./rustfmt.toml:/rust-chat/rustfmt.toml
       - ./Cargo.toml:/rust-chat/Cargo.toml
       - ./Cargo.lock:/rust-chat/Cargo.lock
-      - server-deps:/rust-chat/target
+      - target:/rust-chat/target
     environment:
       - DATABASE_URL=postgres://postgres:password123@database/chat_db
     depends_on:
@@ -47,7 +47,7 @@ services:
       POSTGRES_DB: chat_db
       PGDATA: /var/lib/postgresql/data/
     volumes:
-      - postgres:/var/lib/postgresql/data/
+      - ./postgres-data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
     healthcheck:
@@ -64,6 +64,5 @@ services:
     ports:
       - "8080:8080"
 volumes:
-  server-deps:
-  postgres:
+  target:
   node_modules:
