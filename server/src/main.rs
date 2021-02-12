@@ -1,14 +1,13 @@
-mod db;
-pub mod env;
+mod utils;
 use common::chat::{
   chat_server::{Chat as ChatTrait, ChatServer},
   UserInput, UserSchema,
 };
-use db::Db;
 use serde::Serialize;
 use sqlx::{self, FromRow, Pool, Postgres, Type};
-use std::{ops::Deref, sync::Arc};
+use std::{error::Error, ops::Deref, sync::Arc};
 use tonic::{transport::Server, Request, Response, Status};
+use utils::{connect_to_db, handle_psql_error};
 struct Chat {
   db: Arc<Pool<Postgres>>,
 }
@@ -45,7 +44,7 @@ impl ChatTrait for Chat {
         .bind(active)
         .fetch_one(self.db.deref())
         .await
-        .or_else(|e| Err(Status::unknown(format!("{}", e))))?;
+        .or_else(|e| return Err(handle_psql_error(e)))?;
 
     Ok(Response::new(UserSchema {
       id: inserted_user.id,
@@ -56,8 +55,8 @@ impl ChatTrait for Chat {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-  let db = Arc::new(Db::pool().await?);
+async fn main() -> Result<(), Box<dyn Error>> {
+  let db = Arc::new(connect_to_db().await?);
   let chat_service = ChatServer::new(Chat { db: db.clone() });
   let addr = "[::0]:50051".parse()?;
   println!("GreeterServer listening on {}", addr);
