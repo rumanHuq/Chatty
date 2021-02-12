@@ -1,8 +1,9 @@
-pub mod env;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+mod env;
+use env::EnvVars;
+use sqlx::{postgres::PgPoolOptions, Error as sqlxError, Pool, Postgres};
 use tonic::Status;
 
-pub fn handle_psql_error(e: sqlx::error::Error) -> Status {
+pub fn handle_psql_error(e: sqlxError) -> Status {
   // let a = e.try_into();
   let db_err = e.as_database_error();
 
@@ -23,8 +24,7 @@ pub fn handle_psql_error(e: sqlx::error::Error) -> Status {
 }
 
 pub async fn connect_to_db() -> Result<Pool<Postgres>, Box<dyn std::error::Error>> {
-  let env_vars = env::EnvVars::get();
-  println!("{}", env_vars.db);
+  let env_vars = EnvVars::get();
   let db = PgPoolOptions::new()
     .max_connections(5)
     .connect(&env_vars.db[..])
