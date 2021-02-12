@@ -3,10 +3,6 @@
   "evenBetterToml.formatter.indentTables": true,
   "evenBetterToml.formatter.reorderKeys": true,
   "rust-analyzer.cargo.loadOutDirsFromCheck": true,
-  "rust-analyzer.updates.channel": "nightly",
-  "rust-analyzer.assist.importMergeBehavior": "full",
-  "rust-analyzer.assist.importPrefix": "by_crate",
-  "rust-analyzer.cargo.allFeatures": true,
   "rust-analyzer.server.path": "~/Library/Application Support/Code - Insiders/User/globalStorage/matklad.rust-analyzer/rust-analyzer-x86_64-apple-darwin",
   "sqltools.connections": [
     {

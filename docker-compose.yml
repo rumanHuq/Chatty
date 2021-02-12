@@ -40,6 +40,7 @@ services:
         condition: service_healthy
   #############################################################################
   database:
+    tty: true
     container_name: CHATTY_DB
     image: "postgres:13.1"
     environment:
@@ -56,6 +57,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  #############################################################################
+  pgadmin:
+    tty: true
+    container_name: CHATTY_PG_ADMIN
+    image: dpage/pgadmin4
+    depends_on:
+      database:
+        condition: service_healthy
+    links:
+      - database
+    ports:
+      - "53603:53603"
+      - "80:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: chatty@database.com
+      PGADMIN_DEFAULT_PASSWORD: chatty
   #############################################################################
   envoy:
     tty: true
