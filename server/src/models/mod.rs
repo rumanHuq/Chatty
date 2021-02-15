@@ -1,5 +1,4 @@
 use sqlx::{self, types::chrono, FromRow, Type};
-use std::{convert::TryFrom, time::SystemTime};
 #[derive(FromRow, Debug)]
 pub struct User {
   pub id: i64,
@@ -46,11 +45,6 @@ impl ChronoToProstTime for chrono::DateTime<chrono::Utc> {
       nanos: self.timestamp_nanos() as i32,
       seconds: self.timestamp(),
     };
-    println!(
-      "converted time->{:?}, psqltime->{:?}",
-      SystemTime::try_from(prost_timestamp.clone()),
-      self
-    );
     prost_timestamp
   }
 }

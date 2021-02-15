@@ -1,4 +1,4 @@
-use crate::models::{Active, ChronoToProstTime, ProtoActiveOverrite, User};
+use crate::models::{ChronoToProstTime, ProtoActiveOverrite, User};
 use crate::utils::handle_psql_error;
 use common::chat::{chat_server::Chat as ChatTrait, UserInput, UserSchema};
 use sqlx::{self, Pool, Postgres};
