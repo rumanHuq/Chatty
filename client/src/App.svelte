@@ -19,15 +19,19 @@
     }
   );
 
-  export let name: string = "GRPC SERVER STREAM DEMO";
+  export let name: string;
   export let users: UserSchema[] = [];
 </script>
 
 <!-- Template -->
 <h2>{name}</h2>
 {#each users.map((u) => u) as user (user.getId())}
-  <p>{`id: ${user.getName()}`}</p>
-  <p>{user.getActive()}</p>
-  <p>{user.getCreatedAt().toDate()}</p>
+  <p>
+    {`
+      name: ${user.getName()},
+      active: ${user.getActive()},
+      createdAt: ${user.getCreatedAt().toDate()}
+    `}
+  </p>
 {/each}
 <!-- EOL Template -->
