@@ -1,6 +1,7 @@
 syntax = "proto3";
 package chat;
 
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service Chat {
@@ -10,6 +11,7 @@ service Chat {
   // rpc ChangeStatus(User) returns (google.protobuf.Empty) {};
   // rpc GetActivePeople(google.protobuf.Empty) returns (Users) {};
   rpc CreateUser(UserInput) returns (UserSchema) {};
+  rpc GetUsers(google.protobuf.Empty) returns (stream UserSchema) {};
 }
 
 enum Active {
@@ -27,13 +29,14 @@ message UserSchema {
   int64 id = 1;
   string name = 2;
   Active active = 3;
+  google.protobuf.Timestamp created_at = 4;
 }
 // @Schema
 message Message {
   int64 id = 1;
   UserSchema sender_id = 2;
   string message_text = 3;
-  google.protobuf.Timestamp submit_date = 4;
+  google.protobuf.Timestamp created_at = 4;
 }
 
 message Users {

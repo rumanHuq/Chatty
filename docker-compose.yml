@@ -39,6 +39,7 @@ services:
       database:
         condition: service_healthy
   #############################################################################
+  # https://medium.com/analytics-vidhya/getting-started-with-postgresql-using-docker-compose-34d6b808c47c
   database:
     tty: true
     container_name: CHATTY_DB
@@ -48,6 +49,8 @@ services:
       POSTGRES_USER: chatty
       POSTGRES_PASSWORD: chatty
       POSTGRES_DB: chatty
+      PGDATA: /var/lib/postgresql/data/
+      p: psql -h database -U chatty -d chatty
     volumes:
       - ./postgres-data:/var/lib/postgresql/data/
     ports:
@@ -57,6 +60,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
   #############################################################################
   pgadmin:
     tty: true
@@ -68,11 +72,12 @@ services:
     links:
       - database
     ports:
-      - "53603:53603"
       - "80:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: chatty@database.com
       PGADMIN_DEFAULT_PASSWORD: chatty
+      PGADMIN_LISTEN_PORT: 80
+    restart: unless-stopped
   #############################################################################
   envoy:
     tty: true

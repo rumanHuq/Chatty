@@ -344,7 +344,8 @@ proto.chat.UserSchema.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, 0),
     name: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    active: jspb.Message.getFieldWithDefault(msg, 3, 0)
+    active: jspb.Message.getFieldWithDefault(msg, 3, 0),
+    createdAt: (f = msg.getCreatedAt()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -392,6 +393,11 @@ proto.chat.UserSchema.deserializeBinaryFromReader = function(msg, reader) {
     case 3:
       var value = /** @type {!proto.chat.Active} */ (reader.readEnum());
       msg.setActive(value);
+      break;
+    case 4:
+      var value = new google_protobuf_timestamp_pb.Timestamp;
+      reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
+      msg.setCreatedAt(value);
       break;
     default:
       reader.skipField();
@@ -441,6 +447,14 @@ proto.chat.UserSchema.serializeBinaryToWriter = function(message, writer) {
     writer.writeEnum(
       3,
       f
+    );
+  }
+  f = message.getCreatedAt();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
     );
   }
 };
@@ -500,6 +514,43 @@ proto.chat.UserSchema.prototype.setActive = function(value) {
 };
 
 
+/**
+ * optional google.protobuf.Timestamp created_at = 4;
+ * @return {?proto.google.protobuf.Timestamp}
+ */
+proto.chat.UserSchema.prototype.getCreatedAt = function() {
+  return /** @type{?proto.google.protobuf.Timestamp} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 4));
+};
+
+
+/**
+ * @param {?proto.google.protobuf.Timestamp|undefined} value
+ * @return {!proto.chat.UserSchema} returns this
+*/
+proto.chat.UserSchema.prototype.setCreatedAt = function(value) {
+  return jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.chat.UserSchema} returns this
+ */
+proto.chat.UserSchema.prototype.clearCreatedAt = function() {
+  return this.setCreatedAt(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.chat.UserSchema.prototype.hasCreatedAt = function() {
+  return jspb.Message.getField(this, 4) != null;
+};
+
+
 
 
 
@@ -535,7 +586,7 @@ proto.chat.Message.toObject = function(includeInstance, msg) {
     id: jspb.Message.getFieldWithDefault(msg, 1, 0),
     senderId: (f = msg.getSenderId()) && proto.chat.UserSchema.toObject(includeInstance, f),
     messageText: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    submitDate: (f = msg.getSubmitDate()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
+    createdAt: (f = msg.getCreatedAt()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -588,7 +639,7 @@ proto.chat.Message.deserializeBinaryFromReader = function(msg, reader) {
     case 4:
       var value = new google_protobuf_timestamp_pb.Timestamp;
       reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
-      msg.setSubmitDate(value);
+      msg.setCreatedAt(value);
       break;
     default:
       reader.skipField();
@@ -641,7 +692,7 @@ proto.chat.Message.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getSubmitDate();
+  f = message.getCreatedAt();
   if (f != null) {
     writer.writeMessage(
       4,
@@ -726,10 +777,10 @@ proto.chat.Message.prototype.setMessageText = function(value) {
 
 
 /**
- * optional google.protobuf.Timestamp submit_date = 4;
+ * optional google.protobuf.Timestamp created_at = 4;
  * @return {?proto.google.protobuf.Timestamp}
  */
-proto.chat.Message.prototype.getSubmitDate = function() {
+proto.chat.Message.prototype.getCreatedAt = function() {
   return /** @type{?proto.google.protobuf.Timestamp} */ (
     jspb.Message.getWrapperField(this, google_protobuf_timestamp_pb.Timestamp, 4));
 };
@@ -739,7 +790,7 @@ proto.chat.Message.prototype.getSubmitDate = function() {
  * @param {?proto.google.protobuf.Timestamp|undefined} value
  * @return {!proto.chat.Message} returns this
 */
-proto.chat.Message.prototype.setSubmitDate = function(value) {
+proto.chat.Message.prototype.setCreatedAt = function(value) {
   return jspb.Message.setWrapperField(this, 4, value);
 };
 
@@ -748,8 +799,8 @@ proto.chat.Message.prototype.setSubmitDate = function(value) {
  * Clears the message field making it undefined.
  * @return {!proto.chat.Message} returns this
  */
-proto.chat.Message.prototype.clearSubmitDate = function() {
-  return this.setSubmitDate(undefined);
+proto.chat.Message.prototype.clearCreatedAt = function() {
+  return this.setCreatedAt(undefined);
 };
 
 
@@ -757,7 +808,7 @@ proto.chat.Message.prototype.clearSubmitDate = function() {
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.chat.Message.prototype.hasSubmitDate = function() {
+proto.chat.Message.prototype.hasCreatedAt = function() {
   return jspb.Message.getField(this, 4) != null;
 };
 

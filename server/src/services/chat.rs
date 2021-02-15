@@ -1,8 +1,10 @@
-use crate::models::{Active, User};
+use crate::models::{Active, ChronoToProstTime, ProtoActiveOverrite, User};
 use crate::utils::handle_psql_error;
 use common::chat::{chat_server::Chat as ChatTrait, UserInput, UserSchema};
 use sqlx::{self, Pool, Postgres};
-use std::{ops::Deref, sync::Arc};
+use std::{ops::Deref, pin::Pin, sync::Arc};
+use tokio::sync::mpsc;
+use tokio_stream::{Stream, StreamExt};
 use tonic::{Request, Response, Status};
 
 pub struct Chat {
@@ -13,25 +15,45 @@ pub struct Chat {
 impl ChatTrait for Chat {
   async fn create_user(&self, request: Request<UserInput>) -> Result<Response<UserSchema>, Status> {
     let user = request.get_ref();
-    let active = match &user.active {
-      1 => Active::OffLine,
-      2 => Active::Active,
-      3 => Active::NotSeen,
-      _ => Active::Unspecified,
-    };
+    let active = user.active.into_enum();
+    let inserted_user: User = sqlx::query_as::<Postgres, User>(
+      "INSERT INTO users(name, active) VALUES($1,$2) RETURNING id, name, active, created_at",
+    )
+    .bind(&user.name)
+    .bind(active)
+    .fetch_one(self.db.deref())
+    .await
+    .or_else(|e| return Err(handle_psql_error(e)))?;
 
-    let inserted_user: User =
-      sqlx::query_as::<Postgres, User>("INSERT INTO users(name, active) VALUES($1,$2) RETURNING id, name, active")
-        .bind(&user.name)
-        .bind(active)
-        .fetch_one(self.db.deref())
-        .await
-        .or_else(|e| return Err(handle_psql_error(e)))?;
-
-    Ok(Response::new(UserSchema {
+    let created_at = inserted_user.created_at.into_prost_timestamp().normalize();
+    println!("{:?}, {:?}", created_at, inserted_user.created_at);
+    let response = UserSchema {
       id: inserted_user.id,
       name: inserted_user.name,
       active: user.active,
-    }))
+      created_at: Some(inserted_user.created_at.into_prost_timestamp()),
+    };
+
+    Ok(Response::new(response))
+  }
+
+  type GetUsersStream = Pin<Box<dyn Stream<Item = Result<UserSchema, Status>> + Send + Sync + 'static>>;
+  async fn get_users(&self, _request: Request<()>) -> Result<Response<Self::GetUsersStream>, Status> {
+    let (tx, rx) = mpsc::channel(4);
+    let mut rows =
+      sqlx::query_as::<Postgres, User>("SELECT id,name,active,created_at FROM users").fetch(self.db.deref());
+
+    while let Some(user) = rows.try_next().await.or_else(|e| return Err(handle_psql_error(e)))? {
+      // map the row into a user-defined domain type
+      let response = UserSchema {
+        id: user.id,
+        name: user.name,
+        active: user.active.into_i32(),
+        created_at: Some(user.created_at.into_prost_timestamp()),
+      };
+      tx.send(Ok(response.clone())).await.unwrap();
+    }
+
+    Ok(Response::new(Box::pin(tokio_stream::wrappers::ReceiverStream::new(rx))))
   }
 }

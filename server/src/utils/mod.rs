@@ -4,7 +4,6 @@ use sqlx::{postgres::PgPoolOptions, Error as sqlxError, Pool, Postgres};
 use tonic::Status;
 
 pub fn handle_psql_error(e: sqlxError) -> Status {
-  // let a = e.try_into();
   let db_err = e.as_database_error();
 
   if let Some(error) = db_err {
@@ -12,14 +11,14 @@ pub fn handle_psql_error(e: sqlxError) -> Status {
       let status = match code {
         // https://github.com/lib/pq/blob/master/error.go all the error codes can be found here
         "23505" => Status::already_exists("User Already exists, please login"),
-        _ => Status::unknown(format!("unknown error: {}", e)),
+        num => Status::unknown(format!("db error with status: {:?}, error: {}", num, e)),
       };
       return status;
     } else {
-      Status::unknown(format!("unknown error: {}", e))
+      Status::unknown(format!("db error: {}", e))
     }
   } else {
-    Status::unknown(format!("unknown error{}", e))
+    Status::unknown(format!("Schema Error: {}", e))
   }
 }
 

@@ -38,6 +38,11 @@ export class UserSchema extends jspb.Message {
   getActive(): ActiveMap[keyof ActiveMap];
   setActive(value: ActiveMap[keyof ActiveMap]): void;
 
+  hasCreatedAt(): boolean;
+  clearCreatedAt(): void;
+  getCreatedAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setCreatedAt(value?: google_protobuf_timestamp_pb.Timestamp): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserSchema.AsObject;
   static toObject(includeInstance: boolean, msg: UserSchema): UserSchema.AsObject;
@@ -53,6 +58,7 @@ export namespace UserSchema {
     id: number,
     name: string,
     active: ActiveMap[keyof ActiveMap],
+    createdAt?: google_protobuf_timestamp_pb.Timestamp.AsObject,
   }
 }
 
@@ -68,10 +74,10 @@ export class Message extends jspb.Message {
   getMessageText(): string;
   setMessageText(value: string): void;
 
-  hasSubmitDate(): boolean;
-  clearSubmitDate(): void;
-  getSubmitDate(): google_protobuf_timestamp_pb.Timestamp | undefined;
-  setSubmitDate(value?: google_protobuf_timestamp_pb.Timestamp): void;
+  hasCreatedAt(): boolean;
+  clearCreatedAt(): void;
+  getCreatedAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setCreatedAt(value?: google_protobuf_timestamp_pb.Timestamp): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Message.AsObject;
@@ -88,7 +94,7 @@ export namespace Message {
     id: number,
     senderId?: UserSchema.AsObject,
     messageText: string,
-    submitDate?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    createdAt?: google_protobuf_timestamp_pb.Timestamp.AsObject,
   }
 }
 
