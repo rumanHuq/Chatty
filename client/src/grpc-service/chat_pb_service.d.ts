@@ -2,6 +2,7 @@
 // file: chat.proto
 
 import * as chat_pb from "./chat_pb";
+import * as google_protobuf_empty_pb from "google-protobuf/google/protobuf/empty_pb";
 import {grpc} from "@improbable-eng/grpc-web";
 
 type ChatCreateUser = {
@@ -13,9 +14,19 @@ type ChatCreateUser = {
   readonly responseType: typeof chat_pb.UserSchema;
 };
 
+type ChatGetUsers = {
+  readonly methodName: string;
+  readonly service: typeof Chat;
+  readonly requestStream: false;
+  readonly responseStream: true;
+  readonly requestType: typeof google_protobuf_empty_pb.Empty;
+  readonly responseType: typeof chat_pb.UserSchema;
+};
+
 export class Chat {
   static readonly serviceName: string;
   static readonly CreateUser: ChatCreateUser;
+  static readonly GetUsers: ChatGetUsers;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -59,5 +70,6 @@ export class ChatClient {
     requestMessage: chat_pb.UserInput,
     callback: (error: ServiceError|null, responseMessage: chat_pb.UserSchema|null) => void
   ): UnaryResponse;
+  getUsers(requestMessage: google_protobuf_empty_pb.Empty, metadata?: grpc.Metadata): ResponseStream<chat_pb.UserSchema>;
 }
 

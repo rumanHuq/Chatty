@@ -1,10 +1,10 @@
-use sqlx::{self, FromRow, Type};
+use sqlx::{self, types::chrono, FromRow, Type};
 #[derive(FromRow, Debug)]
 pub struct User {
   pub id: i64,
   pub name: String,
   pub active: Active,
-  pub created_at: sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>,
+  pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Type, Debug)]
