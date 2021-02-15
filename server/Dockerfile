@@ -26,13 +26,11 @@ RUN cargo build -p server --release --bin server
 FROM rust:1.49.0 as dev
 WORKDIR /rust-chat
 EXPOSE 50051
-RUN cargo install cargo-watch sqlx-cli
+RUN cargo install cargo-watch
 RUN rustup component add rustfmt
 RUN rustup set profile minimal
 COPY --from=cacher /rust-chat target
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
-COPY ./migrations /rust-chat/migrations
-ENTRYPOINT ["sh","/rust-chat/migrations/run.sh"]
 CMD ["cargo", "watch", "-x", "run",  "-p", "server" ]
 
 FROM rust:1.49.0 as runtime

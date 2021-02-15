@@ -28,7 +28,6 @@ services:
     volumes:
       - ./server:/rust-chat/server:rw
       - ./common:/rust-chat/common:rw
-      - ./migrations/:/rust-chat/migrations:rw
       - ./rustfmt.toml:/rust-chat/rustfmt.toml
       - ./Cargo.toml:/rust-chat/Cargo.toml
       - ./Cargo.lock:/rust-chat/Cargo.lock
@@ -53,6 +52,8 @@ services:
       p: psql -h database -U chatty -d chatty
     volumes:
       - ./postgres-data:/var/lib/postgresql/data/
+      # maintain the sequence(https://gist.github.com/onjin/2dd3cc52ef79069de1faa2dfd456c945#gistcomment-2163519)
+      - ./schema/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
       - "5432:5432"
     healthcheck:
