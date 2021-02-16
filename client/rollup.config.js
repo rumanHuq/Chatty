@@ -1,33 +1,53 @@
-import svelte from 'rollup-plugin-svelte';
-import commonjs from '@rollup/plugin-commonjs';
-import resolve from '@rollup/plugin-node-resolve';
-import livereload from 'rollup-plugin-livereload';
-import { terser } from 'rollup-plugin-terser';
-import sveltePreprocess from 'svelte-preprocess';
+import svelte from 'rollup-plugin-svelte-hot'
+import resolve from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
+import livereload from 'rollup-plugin-livereload'
+import { terser } from 'rollup-plugin-terser'
+import hmr from 'rollup-plugin-hot'
 import typescript from '@rollup/plugin-typescript';
-import css from 'rollup-plugin-css-only';
+import sveltePreprocess from 'svelte-preprocess';
+// NOTE This will have no effect when running with Nollup. For Nollup, you'd
+// have to add the --history-api-fallback yourself in your package.json
+// scripts (see: https://github.com/PepsRyuu/nollup/#nollup-options)
+//
+const spa = false
 
-const production = !process.env.ROLLUP_WATCH;
+// NOTE The NOLLUP env variable is picked by various HMR plugins to switch
+// in compat mode. You should not change its name (and set the env variable
+// yourself if you launch nollup with custom comands).
+const isNollup = !!process.env.NOLLUP
+const isWatch = !!process.env.ROLLUP_WATCH
+const isLiveReload = !!process.env.LIVERELOAD
+
+const isDev = isWatch || isLiveReload
+const isProduction = !isDev
+
+const isHot = isWatch && !isLiveReload
 
 function serve() {
-	let server;
+	let server
 
 	function toExit() {
-		if (server) server.kill(0);
+		if (server) server.kill(0)
 	}
 
 	return {
+		name: 'svelte/template:serve',
 		writeBundle() {
-			if (server) return;
-			server = require('child_process').spawn('npm', ['run', 'start', '--', '--dev'], {
-				stdio: ['ignore', 'inherit', 'inherit'],
-				shell: true
-			});
+			if (server) return
+			server = require('child_process').spawn(
+				'npm',
+				['run', 'start', '--', '--dev'],
+				{
+					stdio: ['ignore', 'inherit', 'inherit'],
+					shell: true,
+				}
+			)
 
-			process.on('SIGTERM', toExit);
-			process.on('exit', toExit);
-		}
-	};
+			process.on('SIGTERM', toExit)
+			process.on('exit', toExit)
+		},
+	}
 }
 
 export default {
@@ -36,48 +56,43 @@ export default {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: 'public/build/bundle.js'
+		file: 'public/build/bundle.js',
 	},
 	plugins: [
 		svelte({
-			preprocess: sveltePreprocess({ sourceMap: !production }),
-			compilerOptions: {
-				// enable run-time checks when not in production
-				dev: !production
-			}
+			preprocess: sveltePreprocess({ sourceMap: !isProduction }),
+			dev: !isProduction,
+			// NOTE when hot option is enabled, a blank file will be written to
+			css: css => {
+				css.write(isNollup ? 'build/bundle.css' : 'bundle.css')
+			},
+			hot: isHot && {
+				optimistic: true,
+				noPreserveState: false,
+			},
 		}),
-		// we'll extract any component CSS out into
-		// a separate file - better for performance
-		css({ output: 'bundle.css' }),
-
-		// If you have external dependencies installed from
-		// npm, you'll most likely need these plugins. In
-		// some cases you'll need additional configuration -
-		// consult the documentation for details:
-		// https://github.com/rollup/plugins/tree/master/packages/commonjs
 		resolve({
 			browser: true,
-			dedupe: ['svelte']
+			dedupe: ['svelte'],
 		}),
 		commonjs(),
 		typescript({
-			sourceMap: !production,
-			inlineSources: !production
+			sourceMap: isDev,
+			inlineSources: isDev
 		}),
+		isDev && !isNollup && serve(),
+		isLiveReload && livereload('public'),
+		isProduction && terser(),
 
-		// In dev mode, call `npm run start` once
-		// the bundle has been generated
-		!production && serve(),
-
-		// Watch the `public` directory and refresh the
-		// browser on changes when not in production
-		!production && livereload('public'),
-
-		// If we're building for production (npm run build
-		// instead of npm run dev), minify
-		production && terser()
+		hmr({
+			host: '0.0.0.0',
+			public: 'public',
+			inMemory: true,
+			// port: '12345'
+			compatModuleHot: !isHot,
+		}),
 	],
 	watch: {
-		clearScreen: false
-	}
-};
+		clearScreen: false,
+	},
+}

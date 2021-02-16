@@ -12,4 +12,4 @@ COPY . .
 COPY --from=base /client .
 CMD [ "npm", "run", "dev" ]
 EXPOSE 5000
-
+EXPOSE 33440
