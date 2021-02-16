@@ -4,7 +4,7 @@
   import { Empty } from "google-protobuf/google/protobuf/empty_pb";
   import { UserSchema } from "./grpc-service/chat_pb";
   import { Chat } from "./grpc-service/chat_pb_service";
-
+  import Children from "./components/Children.svelte";
   grpc.invoke<Empty, UserSchema, grpc.MethodDefinition<Empty, UserSchema>>(
     Chat.GetUsers,
     {
@@ -13,7 +13,8 @@
         users = [...users, user];
       },
       onEnd(code, status) {
-        console.log(code, status);
+        if (code) console.log(code, status);
+        name = "Done!";
       },
       request: new UserSchema(),
     }
@@ -25,6 +26,7 @@
 
 <!-- Template -->
 <h2>{name}</h2>
+<Children />
 {#each users.map((u) => u) as user (user.getId())}
   <p>
     {`

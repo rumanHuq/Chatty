@@ -24,7 +24,7 @@ impl ChatTrait for Chat {
     )
     .bind(&user.name)
     .bind(active)
-    .fetch_one(self.db.deref())
+    .fetch_one(self.db.clone().deref())
     .await
     .or_else(|e| return Err(handle_psql_error(e)))?;
 
@@ -42,11 +42,16 @@ impl ChatTrait for Chat {
 
   type GetUsersStream = Pin<Box<dyn Stream<Item = Result<UserSchema, Status>> + Send + Sync + 'static>>;
   async fn get_users(&self, _request: Request<()>) -> Result<Response<Self::GetUsersStream>, Status> {
-    let (tx, rx) = mpsc::channel(4);
-    let mut rows =
-      sqlx::query_as::<Postgres, User>("SELECT id,name,active,created_at FROM users").fetch(self.db.deref());
+    let db = self.db.deref();
+    let result = sqlx::query!(r#"SELECT COUNT(*) as "count!" FROM users"#)
+      .fetch_one(db)
+      .await
+      .or_else(|e| Err(handle_psql_error(e)))?;
 
-    while let Some(user) = rows.try_next().await.or_else(|e| return Err(handle_psql_error(e)))? {
+    let (tx, rx) = mpsc::channel(result.count as usize);
+    let mut stream = sqlx::query_as::<Postgres, User>("SELECT id,name,active,created_at FROM users").fetch(db);
+
+    while let Some(user) = stream.try_next().await.or_else(|e| Err(handle_psql_error(e)))? {
       // map the row into a user-defined domain type
       let response = UserSchema {
         id: user.id,
@@ -54,7 +59,9 @@ impl ChatTrait for Chat {
         active: user.active.into_i32(),
         created_at: Some(user.created_at.into_prost_timestamp()),
       };
-      tx.send(Ok(response.clone())).await.unwrap();
+      tx.send(Ok(response.clone()))
+        .await
+        .or_else(|e| Err(Status::unknown(format!("{:?}", e))))?;
     }
 
     Ok(Response::new(Box::pin(tokio_stream::wrappers::ReceiverStream::new(rx))))

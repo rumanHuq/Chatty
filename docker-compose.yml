@@ -61,7 +61,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: always
   #############################################################################
   pgadmin:
     tty: true
@@ -78,7 +78,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: chatty@database.com
       PGADMIN_DEFAULT_PASSWORD: chatty
       PGADMIN_LISTEN_PORT: 80
-    restart: unless-stopped
+    restart: always
   #############################################################################
   envoy:
     tty: true
