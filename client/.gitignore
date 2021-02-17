@@ -1,0 +1,9 @@
+**/node_modules/
+.DS_Store
+client/dist/
+client/**/.history
+client/src/tmp/
+client/.routify
+client/.netlify
+client/assets/build
+client/.vercel

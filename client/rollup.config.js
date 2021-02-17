@@ -1,98 +1,101 @@
-import svelte from 'rollup-plugin-svelte-hot'
-import resolve from '@rollup/plugin-node-resolve'
-import commonjs from '@rollup/plugin-commonjs'
-import livereload from 'rollup-plugin-livereload'
-import { terser } from 'rollup-plugin-terser'
-import hmr from 'rollup-plugin-hot'
+import svelte from 'rollup-plugin-svelte-hot';
+import Hmr from 'rollup-plugin-hot'
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import livereload from 'rollup-plugin-livereload';
+import { terser } from 'rollup-plugin-terser';
 import typescript from '@rollup/plugin-typescript';
-import sveltePreprocess from 'svelte-preprocess';
-// NOTE This will have no effect when running with Nollup. For Nollup, you'd
-// have to add the --history-api-fallback yourself in your package.json
-// scripts (see: https://github.com/PepsRyuu/nollup/#nollup-options)
-//
-const spa = false
+import { copySync, removeSync } from 'fs-extra'
+import { spassr } from 'spassr'
+import getConfig from '@roxi/routify/lib/utils/config'
+import autoPreprocess from 'svelte-preprocess'
+import postcssImport from 'postcss-import'
+import { injectManifest } from 'rollup-plugin-workbox'
 
-// NOTE The NOLLUP env variable is picked by various HMR plugins to switch
-// in compat mode. You should not change its name (and set the env variable
-// yourself if you launch nollup with custom comands).
+
+const { distDir } = getConfig() // use Routify's distDir for SSOT
+const assetsDir = 'assets'
+const buildDir = `dist/build`
 const isNollup = !!process.env.NOLLUP
-const isWatch = !!process.env.ROLLUP_WATCH
-const isLiveReload = !!process.env.LIVERELOAD
+const production = !process.env.ROLLUP_WATCH;
 
-const isDev = isWatch || isLiveReload
-const isProduction = !isDev
+// clear previous builds
+removeSync(distDir)
+removeSync(buildDir)
 
-const isHot = isWatch && !isLiveReload
 
-function serve() {
-	let server
+const serve = () => ({
+    writeBundle: async () => {
+        const options = {
+            assetsDir: [assetsDir, distDir],
+            entrypoint: `${assetsDir}/__app.html`,
+            script: `${buildDir}/main.js`
+        }
+        spassr({ ...options, port: 5000 })
+        spassr({ ...options, ssr: true, port: 5005, ssrOptions: { inlineDynamicImports: true, dev: true } })
+    }
+})
+const copyToDist = () => ({ writeBundle() { copySync(assetsDir, distDir) } })
 
-	function toExit() {
-		if (server) server.kill(0)
-	}
-
-	return {
-		name: 'svelte/template:serve',
-		writeBundle() {
-			if (server) return
-			server = require('child_process').spawn(
-				'npm',
-				['run', 'start', '--', '--dev'],
-				{
-					stdio: ['ignore', 'inherit', 'inherit'],
-					shell: true,
-				}
-			)
-
-			process.on('SIGTERM', toExit)
-			process.on('exit', toExit)
-		},
-	}
-}
 
 export default {
-	input: 'src/main.ts',
-	output: {
-		sourcemap: true,
-		format: 'iife',
-		name: 'app',
-		file: 'public/build/bundle.js',
-	},
-	plugins: [
-		svelte({
-			preprocess: sveltePreprocess({ sourceMap: !isProduction }),
-			dev: !isProduction,
-			// NOTE when hot option is enabled, a blank file will be written to
-			css: css => {
-				css.write(isNollup ? 'build/bundle.css' : 'bundle.css')
-			},
-			hot: isHot && {
-				optimistic: true,
-				noPreserveState: false,
-			},
-		}),
-		resolve({
-			browser: true,
-			dedupe: ['svelte'],
-		}),
-		commonjs(),
-		typescript({
-			sourceMap: isDev,
-			inlineSources: isDev
-		}),
-		isDev && !isNollup && serve(),
-		isLiveReload && livereload('public'),
-		isProduction && terser(),
+    preserveEntrySignatures: false,
+    input: ['src/main.ts'],
+    output: {
+        sourcemap: true,
+        format: 'esm',
+        dir: buildDir,
+        // for performance, disabling filename hashing in development
+        chunkFileNames: `[name]${production && '-[hash]' || ''}.js`
+    },
+    plugins: [
+        svelte({
+            dev: !production, // run-time checks
+            // Extract component CSS — better performance
+            css: css => css.write(`bundle.css`),
+            hot: isNollup,
+            preprocess: [
+                autoPreprocess({
+                    postcss: { plugins: [postcssImport()] },
+                    defaults: { style: 'postcss' }
+                })
+            ]
+        }),
 
-		hmr({
-			host: '0.0.0.0',
-			public: 'public',
-			inMemory: true,
-			// port: '12345'
-			compatModuleHot: !isHot,
-		}),
-	],
-	watch: {
-		clearScreen: false,
-	},
+        // resolve matching modules from current working directory
+        resolve({
+            browser: true,
+            dedupe: importee => !!importee.match(/svelte(\/|$)/)
+        }),
+        commonjs(),
+        typescript({
+            sourceMap: !production,
+            inlineSources: !production
+        }),
+
+        production && terser(),
+        !production && !isNollup && serve(),
+        !production && !isNollup && livereload(distDir), // refresh entire window when code is updated
+        !production && isNollup && Hmr({ port: 5000, host: '0.0.0.0', inMemory: true, public: assetsDir, }), // refresh only updated code
+        {
+            // provide node environment on the client
+            transform: code => ({
+                code: code.replace('process.env.NODE_ENV', `"${process.env.NODE_ENV}"`),
+                map: { mappings: '' }
+            })
+        },
+        injectManifest({
+            globDirectory: assetsDir,
+            globPatterns: ['**/*.{js,css,svg}', '__app.html'],
+            swSrc: `src/sw.js`,
+            swDest: `${distDir}/serviceworker.js`,
+            maximumFileSizeToCacheInBytes: 10000000, // 10 MB,
+            mode: 'production'
+        }),
+        production && copyToDist(),
+    ],
+    watch: {
+        clearScreen: false,
+        buildDelay: 100,
+    }
 }
